@@ -1,4 +1,4 @@
-# bot.py
+# bot.py — адаптовано спеціально під Railway.app (без FFmpeg)
 import asyncio
 import logging
 import os
@@ -116,13 +116,13 @@ async def download_and_send(
     try:
         status_msg = await message.answer("🔍 Шукаю...")
 
-        # Опції для пошуку з cookies
+        # Опції для пошуку (з cookies)
         ydl_opts_search = {
             "quiet": True,
             "no_warnings": True,
             "extract_flat": True,
             "default_search": "ytsearch",
-            "cookiefile": "cookies.txt",  # ← головне для обходу Sign in
+            "cookiefile": "cookies.txt",  # ← обов’язково для обходу Sign in
             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
             "referer": "https://www.youtube.com/",
         }
@@ -157,7 +157,7 @@ async def download_and_send(
         # Опції для завантаження (БЕЗ FFmpeg — Railway не має ffmpeg)
         ydl_opts_download = {
             "format": "bestaudio/best",
-            # postprocessors вимкнено — немає FFmpeg
+            # postprocessors повністю вимкнено — немає FFmpeg
             "outtmpl": str(user_dir / f"{title}.%(ext)s"),
             "quiet": True,
             "continuedl": True,
@@ -246,7 +246,7 @@ async def cmd_start(message: Message):
         "• dua lipa houdini\n"
         "• the weeknd blinding lights\n"
         "• кравець пам’ятаєш\n\n"
-        "<i>Працюю через YouTube → аудіо</i>"
+        "<i>Працюю через YouTube → аудіо (Railway)</i>"
     )
 
 @router.message(Command("search"))
@@ -277,7 +277,7 @@ async def handle_text_query(message: Message, state: FSMContext):
 # ────────────────────────────────────────────────
 
 async def main():
-    logger.info("Бот запускається...")
+    logger.info("Бот запускається на Railway...")
     await load_bot_username()
     await dp.start_polling(bot)
 
