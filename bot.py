@@ -60,7 +60,7 @@ router = Router()
 dp.include_router(router)
 
 # ────────────────────────────────────────────────
-# Функція для отримання username бота (викликається один раз)
+# Функція для отримання username бота
 # ────────────────────────────────────────────────
 
 async def load_bot_username():
@@ -116,16 +116,21 @@ async def download_and_send(
     try:
         status_msg = await message.answer("🔍 Шукаю...")
 
+        # Опції для пошуку (додаємо cookies + UA + referer)
         ydl_opts_search = {
             "quiet": True,
             "no_warnings": True,
             "extract_flat": True,
             "default_search": "ytsearch",
+            "cookiefile": "cookies.txt",  # головне для обходу "Sign in"
+            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+            "referer": "https://www.youtube.com/",
         }
 
         with yt_dlp.YoutubeDL(ydl_opts_search) as ydl:
             try:
                 search_result = ydl.extract_info(f"ytsearch{SEARCH_LIMIT}:{query}", download=False)
+                logger.info("Пошук пройшов успішно (cookies підхоплено)")
             except Exception as e:
                 logger.exception("Помилка пошуку")
                 await status_msg.edit_text("Не вдалося знайти трек 😔\nСпробуйте інший запит.")
@@ -149,6 +154,7 @@ async def download_and_send(
             "Завантажую та конвертую в mp3... ⏳"
         )
 
+        # Опції для завантаження (те саме + cookies)
         ydl_opts_download = {
             "format": "bestaudio/best",
             "postprocessors": [{
@@ -158,18 +164,21 @@ async def download_and_send(
             }],
             "outtmpl": str(user_dir / f"{title}.%(ext)s"),
             "addmetadata": True,
-            "embedthumbnail": True,
+            # "embedthumbnail": True,  # вимкнено на Railway, бо немає ffmpeg
             "parse_metadata": "title:%(track)s",
             "parse_metadata": "uploader:%(artist)s",
             "quiet": True,
             "continuedl": True,
             "restrict_filenames": True,
+            "cookiefile": "cookies.txt",
+            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+            "referer": "https://www.youtube.com/",
         }
 
         with yt_dlp.YoutubeDL(ydl_opts_download) as ydl:
             info = ydl.extract_info(url, download=True)
 
-        # Визначаємо шлях до файлу
+        # Визначення шляху до файлу
         if "filepath" in info and info["filepath"]:
             filepath = Path(info["filepath"])
         else:
@@ -277,8 +286,11 @@ async def handle_text_query(message: Message, state: FSMContext):
 
 async def main():
     logger.info("Бот запускається...")
-    await load_bot_username()          # ← отримуємо @username один раз
+    await load_bot_username()
     await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
 
 if __name__ == "__main__":
     asyncio.run(main())
