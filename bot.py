@@ -116,13 +116,13 @@ async def download_and_send(
     try:
         status_msg = await message.answer("🔍 Шукаю...")
 
-        # Опції для пошуку
+        # Опції для пошуку (з cookies)
         ydl_opts_search = {
             "quiet": True,
             "no_warnings": True,
             "extract_flat": True,
             "default_search": "ytsearch",
-            "cookiefile": "cookies.txt",  # ← ключовий параметр
+            "cookiefile": "cookies.txt",  # ← ключовий рядок
             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
             "referer": "https://www.youtube.com/",
         }
@@ -154,7 +154,7 @@ async def download_and_send(
             "Завантажую та конвертую в mp3... ⏳"
         )
 
-        # Опції для завантаження
+        # Опції для завантаження (з cookies)
         ydl_opts_download = {
             "format": "bestaudio/best",
             "postprocessors": [{
@@ -163,14 +163,14 @@ async def download_and_send(
                 "preferredquality": "0",
             }],
             "outtmpl": str(user_dir / f"{title}.%(ext)s"),
-            # "addmetadata": True,           # вимкнено на Railway (немає FFmpeg)
+            # "addmetadata": True,           # вимкнено на Railway
             # "embedthumbnail": True,        # вимкнено на Railway
             "parse_metadata": "title:%(track)s",
             "parse_metadata": "uploader:%(artist)s",
             "quiet": True,
             "continuedl": True,
             "restrict_filenames": True,
-            "cookiefile": "cookies.txt",
+            "cookiefile": "cookies.txt",  # ← ключовий рядок
             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
             "referer": "https://www.youtube.com/",
         }
@@ -288,6 +288,9 @@ async def main():
     logger.info("Бот запускається...")
     await load_bot_username()
     await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
 
 if __name__ == "__main__":
     asyncio.run(main())
