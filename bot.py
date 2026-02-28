@@ -116,13 +116,13 @@ async def download_and_send(
     try:
         status_msg = await message.answer("🔍 Шукаю...")
 
-        # Опції для пошуку (з cookies)
+        # Опції для пошуку з cookies
         ydl_opts_search = {
             "quiet": True,
             "no_warnings": True,
             "extract_flat": True,
             "default_search": "ytsearch",
-            "cookiefile": "cookies.txt",  # ← ключовий рядок
+            "cookiefile": "cookies.txt",  # ← головне для обходу Sign in
             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
             "referer": "https://www.youtube.com/",
         }
@@ -151,26 +151,18 @@ async def download_and_send(
             f"🎵 <b>{title}</b>\n"
             f"👤 {uploader}\n"
             f"⏱ {format_duration(duration)}\n\n"
-            "Завантажую та конвертую в mp3... ⏳"
+            "Завантажую аудіо... ⏳"
         )
 
-        # Опції для завантаження (з cookies)
+        # Опції для завантаження (БЕЗ FFmpeg — Railway не має ffmpeg)
         ydl_opts_download = {
             "format": "bestaudio/best",
-            "postprocessors": [{
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": "mp3",
-                "preferredquality": "0",
-            }],
+            # postprocessors вимкнено — немає FFmpeg
             "outtmpl": str(user_dir / f"{title}.%(ext)s"),
-            # "addmetadata": True,           # вимкнено на Railway
-            # "embedthumbnail": True,        # вимкнено на Railway
-            "parse_metadata": "title:%(track)s",
-            "parse_metadata": "uploader:%(artist)s",
             "quiet": True,
             "continuedl": True,
             "restrict_filenames": True,
-            "cookiefile": "cookies.txt",  # ← ключовий рядок
+            "cookiefile": "cookies.txt",
             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
             "referer": "https://www.youtube.com/",
         }
@@ -182,12 +174,12 @@ async def download_and_send(
         if "filepath" in info and info["filepath"]:
             filepath = Path(info["filepath"])
         else:
-            mp3_files = list(user_dir.glob("*.mp3"))
-            if mp3_files:
-                filepath = mp3_files[0]
+            audio_files = list(user_dir.glob("*.*"))  # шукаємо будь-який аудіофайл
+            if audio_files:
+                filepath = audio_files[0]
                 logger.info(f"Використано fallback: знайдено {filepath}")
             else:
-                await status_msg.edit_text("Не вдалося знайти готовий mp3 після конвертації 😢")
+                await status_msg.edit_text("Не вдалося знайти завантажений аудіофайл 😢")
                 return
 
         logger.info(f"Фінальний файл: {filepath}")
@@ -254,7 +246,7 @@ async def cmd_start(message: Message):
         "• dua lipa houdini\n"
         "• the weeknd blinding lights\n"
         "• кравець пам’ятаєш\n\n"
-        "<i>Працюю через YouTube → mp3</i>"
+        "<i>Працюю через YouTube → аудіо</i>"
     )
 
 @router.message(Command("search"))
@@ -288,9 +280,6 @@ async def main():
     logger.info("Бот запускається...")
     await load_bot_username()
     await dp.start_polling(bot)
-
-if __name__ == "__main__":
-    asyncio.run(main())
 
 if __name__ == "__main__":
     asyncio.run(main())
